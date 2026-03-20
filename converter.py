@@ -6,6 +6,8 @@ import markdown2
 from xhtml2pdf import pisa
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from unidecode import unidecode
+from unidecode import unidecode
 
 # --- Rejestracja fontów przez API reportlab ---
 FONTS_DIR = Path(__file__).parent / "fonts"
@@ -113,15 +115,11 @@ img { max-width: 100%; }
 
 EXTRAS = ["fenced-code-blocks", "tables", "strike", "task_list", "footnotes"]
 
-POLISH_CHARS_MAP = str.maketrans({
-    'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
-    'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
-})
 
 def convert_md_to_pdf(md_text: str) -> bytes:
     """Konwertuje tekst Markdown do PDF i zwraca bajty."""
-    # Podmiana polskich znaków na odpowiedniki bez "ogonków"
-    md_text = md_text.translate(POLISH_CHARS_MAP)
+    # Transliteracja wszystkiego (w tym polskich znaków) na ASCII
+    md_text = unidecode(md_text)
     
     html_body = markdown2.markdown(md_text, extras=EXTRAS)
     html_doc = f"""<!DOCTYPE html>
