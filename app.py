@@ -4,6 +4,7 @@ import io
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+import chardet
 from flask import Flask, request, send_file, render_template, jsonify
 from converter import convert_md_to_pdf
 
@@ -48,7 +49,20 @@ def convert():
         if len(raw) > MAX_FILE_SIZE:
             logger.warning("Odrzucono plik: %s (za duży: %d B)", f.filename, len(raw))
             return jsonify({"error": "Plik jest za duży (max 5 MB)"}), 413
-        md_text = raw.decode("utf-8", errors="replace")
+        
+        # Wykrywanie kodowania pliku (bo pliki z Windows mogą być w cp1250)
+        detected = chardet.detect(raw)
+        encoding = detected['encoding'] if detected['encoding'] else "utf-8"
+        # Jeśli bardzo niska pewność lub błąd, spróbujmy utf-8 z fallbackiem na cp1250
+        try:
+            md_text = raw.decode(encoding)
+        except UnicodeDecodeError:
+            try:
+                md_text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                md_text = raw.decode("cp1250", errors="replace")
+                
+        logger.info("Odczytano plik, wykryte kodowanie: %s", encoding)
 
     # Obsługa tekstu wklejonego w edytorze
     elif "text" in request.form and request.form["text"].strip():

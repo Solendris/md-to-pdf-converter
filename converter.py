@@ -10,10 +10,10 @@ from reportlab.pdfbase.ttfonts import TTFont
 # --- Rejestracja fontów przez API reportlab ---
 FONTS_DIR = Path(__file__).parent / "fonts"
 
-pdfmetrics.registerFont(TTFont("MainFont", str(FONTS_DIR / "arial.ttf")))
-pdfmetrics.registerFont(TTFont("MainFont-Bold", str(FONTS_DIR / "arialbd.ttf")))
-pdfmetrics.registerFont(TTFont("MainFont-Italic", str(FONTS_DIR / "ariali.ttf")))
-pdfmetrics.registerFont(TTFont("CodeFont", str(FONTS_DIR / "consola.ttf")))
+pdfmetrics.registerFont(TTFont("MainFont", str(FONTS_DIR / "arial.ttf"), "UTF-8"))
+pdfmetrics.registerFont(TTFont("MainFont-Bold", str(FONTS_DIR / "arialbd.ttf"), "UTF-8"))
+pdfmetrics.registerFont(TTFont("MainFont-Italic", str(FONTS_DIR / "ariali.ttf"), "UTF-8"))
+pdfmetrics.registerFont(TTFont("CodeFont", str(FONTS_DIR / "consola.ttf"), "UTF-8"))
 
 pdfmetrics.registerFontFamily(
     "MainFont",
@@ -113,9 +113,16 @@ img { max-width: 100%; }
 
 EXTRAS = ["fenced-code-blocks", "tables", "strike", "task_list", "footnotes"]
 
+POLISH_CHARS_MAP = str.maketrans({
+    'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
+    'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
+})
 
 def convert_md_to_pdf(md_text: str) -> bytes:
     """Konwertuje tekst Markdown do PDF i zwraca bajty."""
+    # Podmiana polskich znaków na odpowiedniki bez "ogonków"
+    md_text = md_text.translate(POLISH_CHARS_MAP)
+    
     html_body = markdown2.markdown(md_text, extras=EXTRAS)
     html_doc = f"""<!DOCTYPE html>
 <html lang="pl">
