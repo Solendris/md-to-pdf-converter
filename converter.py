@@ -5,95 +5,110 @@ import markdown2
 from xhtml2pdf import pisa
 
 PDF_CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code&display=swap');
+@font-face {
+    font-family: 'MainFont';
+    src: url('C:/Windows/Fonts/arial.ttf');
+}
+@font-face {
+    font-family: 'MainFont';
+    src: url('C:/Windows/Fonts/arialbd.ttf');
+    font-weight: bold;
+}
+@font-face {
+    font-family: 'MainFont';
+    src: url('C:/Windows/Fonts/ariali.ttf');
+    font-style: italic;
+}
+@font-face {
+    font-family: 'CodeFont';
+    src: url('C:/Windows/Fonts/consola.ttf');
+}
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    font-family: 'Inter', sans-serif;
-    font-size: 13pt;
+    font-family: 'MainFont';
+    font-size: 12pt;
     line-height: 1.7;
     color: #1a1a2e;
-    padding: 2.5cm 3cm;
+    padding: 2cm 2.5cm;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
+    font-family: 'MainFont';
+    font-weight: bold;
     color: #16213e;
-    margin: 1.4em 0 0.5em;
+    margin: 1.2em 0 0.4em;
     line-height: 1.3;
 }
-h1 { font-size: 2em; border-bottom: 2px solid #e94560; padding-bottom: 0.3em; }
-h2 { font-size: 1.5em; border-bottom: 1px solid #ddd; padding-bottom: 0.2em; }
-h3 { font-size: 1.2em; }
+h1 { font-size: 22pt; border-bottom: 2px solid #e94560; padding-bottom: 6px; }
+h2 { font-size: 17pt; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+h3 { font-size: 14pt; }
 
-p { margin: 0.7em 0; }
+p { margin: 0.5em 0; }
 
 a { color: #e94560; text-decoration: none; }
 
-ul, ol { margin: 0.7em 0 0.7em 1.8em; }
-li { margin: 0.3em 0; }
+ul, ol { margin: 0.5em 0 0.5em 1.5em; }
+li { margin: 0.2em 0; }
 
 blockquote {
-    border-left: 4px solid #e94560;
-    margin: 1em 0;
-    padding: 0.5em 1em;
+    border-left: 3px solid #e94560;
+    margin: 0.8em 0;
+    padding: 0.4em 0.8em;
     background: #f0f4f8;
-    border-radius: 0 4px 4px 0;
     color: #555;
 }
 
 code {
-    font-family: 'Fira Code', monospace;
-    font-size: 0.88em;
-    background: #f0f4f8;
-    padding: 0.15em 0.4em;
-    border-radius: 3px;
-    color: #e94560;
+    font-family: 'CodeFont';
+    font-size: 10pt;
+    background: #eef2f7;
+    padding: 1px 4px;
+    color: #c7254e;
 }
 
 pre {
-    background: #1a1a2e;
-    color: #e2e8f0;
-    padding: 1em 1.2em;
-    border-radius: 6px;
-    overflow-x: auto;
-    margin: 1em 0;
-    font-size: 0.85em;
-    line-height: 1.6;
+    background: #eef2f7;
+    color: #1a1a2e;
+    padding: 10px 12px;
+    margin: 0.8em 0;
+    font-size: 9pt;
+    line-height: 1.5;
+    border-left: 3px solid #3b82f6;
 }
 pre code {
     background: none;
     padding: 0;
-    color: inherit;
+    color: #1a1a2e;
 }
 
 table {
-    border-collapse: collapse;
     width: 100%;
-    margin: 1em 0;
-    font-size: 0.95em;
+    margin: 0.8em 0;
+    font-size: 10pt;
 }
 th {
-    background: #16213e;
+    background: #e94560;
     color: #fff;
-    font-weight: 600;
-    padding: 0.6em 1em;
+    font-weight: bold;
+    padding: 6px 10px;
     text-align: left;
+    font-family: 'MainFont';
 }
 td {
-    padding: 0.5em 1em;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 5px 10px;
+    border-bottom: 1px solid #ddd;
+    font-family: 'MainFont';
 }
-tr:nth-child(even) td { background: #f7f9fc; }
 
 hr {
     border: none;
-    border-top: 1px solid #e2e8f0;
-    margin: 1.5em 0;
+    border-top: 1px solid #ddd;
+    margin: 1.2em 0;
 }
 
-img { max-width: 100%; border-radius: 4px; }
+img { max-width: 100%; }
 """
 
 EXTRAS = ["fenced-code-blocks", "tables", "strike", "task_list", "footnotes"]
