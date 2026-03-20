@@ -2,6 +2,7 @@
 
 import io
 import logging
+import zipfile
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 import chardet
@@ -35,57 +36,86 @@ def index():
 
 @app.route("/convert", methods=["POST"])
 def convert():
-    md_text = None
-    source = "text"
-
-    # Obsługa przesłanego pliku .md
-    if "file" in request.files and request.files["file"].filename:
-        f = request.files["file"]
-        source = f.filename
-        if not f.filename.endswith(".md"):
-            logger.warning("Odrzucono plik: %s (nie .md)", f.filename)
-            return jsonify({"error": "Plik musi mieć rozszerzenie .md"}), 400
-        raw = f.read(MAX_FILE_SIZE + 1)
-        if len(raw) > MAX_FILE_SIZE:
-            logger.warning("Odrzucono plik: %s (za duży: %d B)", f.filename, len(raw))
-            return jsonify({"error": "Plik jest za duży (max 5 MB)"}), 413
+    valid_files = []
+    
+    # Obsługa przesłanych plików .md
+    uploaded_files = request.files.getlist("files")
+    if uploaded_files and any(f.filename for f in uploaded_files):
+        source = f"pliki ({len(uploaded_files)})"
         
-        # Wykrywanie kodowania pliku (bo pliki z Windows mogą być w cp1250)
-        detected = chardet.detect(raw)
-        encoding = detected['encoding'] if detected['encoding'] else "utf-8"
-        # Jeśli bardzo niska pewność lub błąd, spróbujmy utf-8 z fallbackiem na cp1250
-        try:
-            md_text = raw.decode(encoding)
-        except UnicodeDecodeError:
-            try:
-                md_text = raw.decode("utf-8")
-            except UnicodeDecodeError:
-                md_text = raw.decode("cp1250", errors="replace")
+        for f in uploaded_files:
+            if not f.filename.endswith(".md"):
+                logger.warning("Pominęto plik: %s (nie .md)", f.filename)
+                continue
                 
-        logger.info("Odczytano plik, wykryte kodowanie: %s", encoding)
+            raw = f.read(MAX_FILE_SIZE + 1)
+            if len(raw) > MAX_FILE_SIZE:
+                logger.warning("Pominęto plik: %s (za duży: %d B)", f.filename, len(raw))
+                continue
+            
+            detected = chardet.detect(raw)
+            encoding = detected['encoding'] if detected['encoding'] else "utf-8"
+            
+            try:
+                text = raw.decode(encoding)
+            except UnicodeDecodeError:
+                try:
+                    text = raw.decode("utf-8")
+                except UnicodeDecodeError:
+                    text = raw.decode("cp1250", errors="replace")
+            
+            valid_files.append((f.filename, text))
+            
+        if not valid_files:
+            return jsonify({"error": "Żaden z przesłanych plików nie był poprawnym plikiem .md do 5MB."}), 400
 
     # Obsługa tekstu wklejonego w edytorze
     elif "text" in request.form and request.form["text"].strip():
-        md_text = request.form["text"]
+        source = "text"
+        valid_files.append(("dokument.md", request.form["text"]))
 
-    else:
+    if not valid_files:
         logger.warning("Żądanie bez treści do konwersji")
         return jsonify({"error": "Brak treści do konwersji"}), 400
 
     try:
-        logger.info("Konwersja: źródło=%s, rozmiar=%d znaków", source, len(md_text))
-        pdf_bytes = convert_md_to_pdf(md_text)
-        logger.info("Sukces: wygenerowano PDF %d bajtów", len(pdf_bytes))
+        if len(valid_files) == 1:
+            # Konwersja pojedynczego pliku -> zwrotka pliku PDF
+            orig_filename, md_text = valid_files[0]
+            logger.info("Konwersja 1 pliku: źródło=%s, rozmiar=%d znaków", orig_filename, len(md_text))
+            pdf_bytes = convert_md_to_pdf(md_text)
+            
+            return send_file(
+                io.BytesIO(pdf_bytes),
+                mimetype="application/pdf",
+                as_attachment=True,
+                download_name=orig_filename.replace(".md", ".pdf"),
+            )
+            
+        else:
+            # Konwersja wielu plików -> zwrotka paczki ZIP
+            logger.info("Konwersja paczki %d plików do ZIP", len(valid_files))
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                for orig_filename, md_text in valid_files:
+                    try:
+                        pdf_bytes = convert_md_to_pdf(md_text)
+                        pdf_filename = orig_filename.replace(".md", ".pdf")
+                        zip_file.writestr(pdf_filename, pdf_bytes)
+                    except Exception as e:
+                        logger.error("Błąd generowania PDF dla %s: %s", orig_filename, e)
+            
+            zip_buffer.seek(0)
+            return send_file(
+                zip_buffer,
+                mimetype="application/zip",
+                as_attachment=True,
+                download_name="dokumenty.zip",
+            )
+            
     except Exception:
-        logger.exception("Błąd podczas konwersji")
-        return jsonify({"error": "Wystąpił błąd podczas konwersji"}), 500
-
-    return send_file(
-        io.BytesIO(pdf_bytes),
-        mimetype="application/pdf",
-        as_attachment=True,
-        download_name="dokument.pdf",
-    )
+        logger.exception("Błąd ogólny podczas konwersji")
+        return jsonify({"error": "Wystąpił błąd serwera"}), 500
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ const errorMsg    = document.getElementById("error-msg");
 const btnText     = convertBtn.querySelector(".btn-text");
 const btnSpinner  = convertBtn.querySelector(".btn-spinner");
 
-let selectedFile = null;
+let selectedFiles = [];
 
 /* ===== Helpers ===== */
 function showError(msg) {
@@ -24,26 +24,40 @@ function clearError() {
     errorMsg.classList.add("hidden");
 }
 function updateConvertBtn() {
-    const hasContent = selectedFile !== null || mdEditor.value.trim().length > 0;
+    const hasContent = selectedFiles.length > 0 || mdEditor.value.trim().length > 0;
     convertBtn.disabled = !hasContent;
 }
-function setFile(file) {
-    if (!file.name.endsWith(".md")) {
-        showError("Akceptowane są tylko pliki .md");
+function setFiles(fileList) {
+    const validFiles = Array.from(fileList).filter(f => f.name.endsWith(".md"));
+    if (validFiles.length === 0) {
+        showError("Załadowano pliki, ale żaden nie jest w formacie .md");
         return;
     }
-    selectedFile = file;
-    fileName.textContent = file.name;
+    
+    selectedFiles = validFiles;
+    
+    if (selectedFiles.length === 1) {
+        fileName.textContent = selectedFiles[0].name;
+    } else {
+        fileName.textContent = `Wybrano plików: ${selectedFiles.length}`;
+    }
     fileBadge.classList.remove("hidden");
-    // Wczytaj plik do edytora (podgląd)
+    
+    // Wczytaj pierwszy plik do edytora jako podgląd
     const reader = new FileReader();
-    reader.onload = (e) => { mdEditor.value = e.target.result; updateConvertBtn(); };
-    reader.readAsText(file, "utf-8");
+    reader.onload = (e) => { 
+        mdEditor.value = e.target.result; 
+        if (selectedFiles.length > 1) {
+            mdEditor.value += `\n\n... (oraz treść z ${selectedFiles.length - 1} innych plików, które zostaną połączone)`;
+        }
+        updateConvertBtn(); 
+    };
+    reader.readAsText(selectedFiles[0], "utf-8");
     clearError();
     updateConvertBtn();
 }
-function clearFile() {
-    selectedFile = null;
+function clearFiles() {
+    selectedFiles = [];
     fileInput.value = "";
     fileBadge.classList.add("hidden");
     fileName.textContent = "";
@@ -61,27 +75,32 @@ dropZone.addEventListener("dragover", (e) => {
 dropZone.addEventListener("drop", (e) => {
     e.preventDefault();
     dropZone.classList.remove("drag-over");
-    const file = e.dataTransfer.files[0];
-    if (file) setFile(file);
+    if (e.dataTransfer.files.length > 0) {
+        setFiles(e.dataTransfer.files);
+    }
 });
 
 /* ===== File Input ===== */
 fileInput.addEventListener("change", () => {
-    if (fileInput.files[0]) setFile(fileInput.files[0]);
+    if (fileInput.files.length > 0) {
+        setFiles(fileInput.files);
+    }
 });
-fileClear.addEventListener("click", clearFile);
+fileClear.addEventListener("click", clearFiles);
 
 /* ===== Editor ===== */
 mdEditor.addEventListener("input", () => { clearError(); updateConvertBtn(); });
-clearText.addEventListener("click", () => { mdEditor.value = ""; clearFile(); clearError(); updateConvertBtn(); });
+clearText.addEventListener("click", () => { mdEditor.value = ""; clearFiles(); clearError(); updateConvertBtn(); });
 
 /* ===== Conversion ===== */
 convertBtn.addEventListener("click", async () => {
     clearError();
 
     const formData = new FormData();
-    if (selectedFile) {
-        formData.append("file", selectedFile);
+    if (selectedFiles.length > 0) {
+        selectedFiles.forEach(file => {
+            formData.append("files", file);
+        });
     } else {
         formData.append("text", mdEditor.value);
     }
@@ -99,12 +118,21 @@ convertBtn.addEventListener("click", async () => {
             throw new Error(data.error || `Błąd serwera: ${response.status}`);
         }
 
-        // Pobierz PDF
+        // Pobierz PDF lub ZIP
         const blob = await response.blob();
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement("a");
         a.href     = url;
-        a.download = selectedFile ? selectedFile.name.replace(/\.md$/, ".pdf") : "dokument.pdf";
+        
+        // Określ nazwę pliku
+        let downloadName = "dokument.pdf";
+        if (selectedFiles.length === 1) {
+            downloadName = selectedFiles[0].name.replace(/\.md$/, ".pdf");
+        } else if (selectedFiles.length > 1) {
+            downloadName = "dokumenty.zip";
+        }
+        
+        a.download = downloadName;
         document.body.appendChild(a);
         a.click();
         a.remove();
