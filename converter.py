@@ -1,29 +1,29 @@
 """Konwersja Markdown → PDF za pomocą markdown2 i xhtml2pdf."""
 
 import io
+from pathlib import Path
 import markdown2
 from xhtml2pdf import pisa
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
+# --- Rejestracja fontów przez API reportlab ---
+FONTS_DIR = Path(__file__).parent / "fonts"
+
+pdfmetrics.registerFont(TTFont("MainFont", str(FONTS_DIR / "arial.ttf")))
+pdfmetrics.registerFont(TTFont("MainFont-Bold", str(FONTS_DIR / "arialbd.ttf")))
+pdfmetrics.registerFont(TTFont("MainFont-Italic", str(FONTS_DIR / "ariali.ttf")))
+pdfmetrics.registerFont(TTFont("CodeFont", str(FONTS_DIR / "consola.ttf")))
+
+pdfmetrics.registerFontFamily(
+    "MainFont",
+    normal="MainFont",
+    bold="MainFont-Bold",
+    italic="MainFont-Italic",
+)
+
+# --- CSS dla PDF (bez @font-face — fonty zarejestrowane wyżej) ---
 PDF_CSS = """
-@font-face {
-    font-family: 'MainFont';
-    src: url('C:/Windows/Fonts/arial.ttf');
-}
-@font-face {
-    font-family: 'MainFont';
-    src: url('C:/Windows/Fonts/arialbd.ttf');
-    font-weight: bold;
-}
-@font-face {
-    font-family: 'MainFont';
-    src: url('C:/Windows/Fonts/ariali.ttf');
-    font-style: italic;
-}
-@font-face {
-    font-family: 'CodeFont';
-    src: url('C:/Windows/Fonts/consola.ttf');
-}
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
