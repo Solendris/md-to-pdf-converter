@@ -1,5 +1,3 @@
-"""Konwersja Markdown → PDF za pomocą markdown2 i xhtml2pdf."""
-
 import io
 from pathlib import Path
 import markdown2
@@ -9,7 +7,6 @@ from reportlab.pdfbase.ttfonts import TTFont
 from unidecode import unidecode
 from unidecode import unidecode
 
-# --- Rejestracja fontów przez API reportlab ---
 FONTS_DIR = Path(__file__).parent / "fonts"
 
 pdfmetrics.registerFont(TTFont("MainFont", str(FONTS_DIR / "arial.ttf"), "UTF-8"))
@@ -24,7 +21,6 @@ pdfmetrics.registerFontFamily(
     italic="MainFont-Italic",
 )
 
-# --- CSS dla PDF (bez @font-face — fonty zarejestrowane wyżej) ---
 PDF_CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -117,13 +113,11 @@ EXTRAS = ["fenced-code-blocks", "tables", "strike", "task_list", "footnotes"]
 
 
 def convert_md_to_pdf(md_text: str) -> bytes:
-    """Konwertuje tekst Markdown do PDF i zwraca bajty."""
-    # Transliteracja wszystkiego (w tym polskich znaków) na ASCII
     md_text = unidecode(md_text)
     
     html_body = markdown2.markdown(md_text, extras=EXTRAS)
     html_doc = f"""<!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <style>{PDF_CSS}</style>
@@ -135,5 +129,5 @@ def convert_md_to_pdf(md_text: str) -> bytes:
     pdf_buffer = io.BytesIO()
     result = pisa.CreatePDF(src=html_doc, dest=pdf_buffer, encoding="utf-8")
     if result.err:
-        raise RuntimeError(f"Błąd konwersji PDF: {result.err}")
+        raise RuntimeError(f"PDF conversion error: {result.err}")
     return pdf_buffer.getvalue()

@@ -1,14 +1,19 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MD → PDF Converter</title>
-    <meta name="description" content="Prosta aplikacja do konwersji plików Markdown na PDF bezpośrednio w przeglądarce.">
+    <meta name="description"
+        content="Prosta aplikacja do konwersji plików Markdown na PDF bezpośrednio w przeglądarce.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
     <div class="bg-orbs">
         <div class="orb orb-1"></div>
@@ -22,37 +27,32 @@
                 <span class="logo-icon">⚡</span>
                 <h1>MD <span class="accent">→</span> PDF</h1>
             </div>
-            <p class="subtitle">Konwertuj pliki Markdown na PDF w kilka sekund</p>
+            <p class="subtitle">Convert Markdown files to PDF in seconds</p>
         </header>
 
         <div class="card">
-            <!-- Strefa Drag & Drop -->
             <div id="drop-zone" class="drop-zone">
                 <div class="drop-icon">📄</div>
-                <p class="drop-title">Przeciągnij plik(i) <code>.md</code> tutaj</p>
-                <p class="drop-sub">lub</p>
-                <label for="file-input" class="btn btn-secondary">Wybierz pliki</label>
+                <p class="drop-title">Drag & drop <code>.md</code> file(s) here</p>
+                <p class="drop-sub">or</p>
+                <label for="file-input" class="btn btn-secondary">Browse files</label>
                 <input id="file-input" type="file" accept=".md" multiple hidden>
                 <div id="file-badge" class="file-badge hidden">
                     <span id="file-name"></span>
-                    <button id="file-clear" class="clear-btn" title="Usuń plik">✕</button>
+                    <button id="file-clear" class="clear-btn" title="Remove file">✕</button>
                 </div>
             </div>
 
             <div class="divider">
-                <span>lub wpisz / wklej Markdown</span>
+                <span>or type / paste Markdown</span>
             </div>
 
-            <!-- Edytor tekstowy -->
             <div class="editor-wrapper">
                 <div class="editor-header">
-                    <span class="editor-label">Edytor Markdown</span>
-                    <button id="clear-text" class="link-btn">Wyczyść</button>
+                    <span class="editor-label">Markdown Editor</span>
+                    <button id="clear-text" class="link-btn">Clear</button>
                 </div>
-                <textarea
-                    id="md-editor"
-                    class="editor"
-                    placeholder="# Tytuł dokumentu
+                <textarea id="md-editor" class="editor" placeholder="# Tytuł dokumentu
 
 ## Sekcja 1
 Wpisz tutaj treść w formacie **Markdown**...
@@ -62,28 +62,25 @@ Wpisz tutaj treść w formacie **Markdown**...
 
 ```python
 print('Hello, World!')
-```"
-                    spellcheck="false"
-                ></textarea>
+```" spellcheck="false"></textarea>
             </div>
 
-            <!-- Przycisk konwersji -->
             <button id="convert-btn" class="btn btn-primary" disabled>
-                <span class="btn-text">Konwertuj i pobierz PDF</span>
+                <span class="btn-text">Convert & download PDF</span>
                 <span class="btn-spinner hidden">
-                    <span class="spinner"></span> Konwertuję...
+                    <span class="spinner"></span> Converting...
                 </span>
             </button>
 
-            <!-- Komunikaty błędów -->
             <div id="error-msg" class="error-msg hidden"></div>
         </div>
 
         <footer class="footer">
-            <p>Obsługuje: nagłówki, listy, tabele, bloki kodu, pogrubienie, kursywa i więcej</p>
+            <p>Supports: headings, lists, tables, code blocks, bold, italic and more</p>
         </footer>
     </main>
 
     <script src="/static/js/app.js"></script>
 </body>
+
 </html>
