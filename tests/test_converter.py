@@ -15,4 +15,4 @@ def test_pdf_error_raises_runtime_error():
     with patch("converter.pisa.CreatePDF", return_value=mock_result), \
         pytest.raises(RuntimeError):
         convert_md_to_pdf("# Hello")
-     
+        
